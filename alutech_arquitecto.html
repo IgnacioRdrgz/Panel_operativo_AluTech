@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AluTech · Relevamiento en Obra</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222638;
+    --border: #2e334a;
+    --accent: #3b82f6;
+    --accent2: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e8eaf2;
+    --muted: #8b90a7;
+    --label: #5a6080;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 16px 40px;
+  }
+
+  .phone-shell {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border-radius: 28px;
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    background: #0a0c12;
+    padding: 10px 20px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+  }
+  .status-bar .time { font-weight: 600; color: var(--text); }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .signal { display: flex; gap: 2px; align-items: flex-end; }
+  .signal span { background: var(--text); border-radius: 1px; width: 3px; }
+  .signal span:nth-child(1) { height: 4px; }
+  .signal span:nth-child(2) { height: 6px; }
+  .signal span:nth-child(3) { height: 8px; }
+  .signal span:nth-child(4) { height: 10px; }
+  .battery { width: 18px; height: 9px; border: 1.5px solid var(--muted); border-radius: 2px; position: relative; }
+  .battery::after { content: ''; position: absolute; right: -4px; top: 50%; transform: translateY(-50%); width: 2px; height: 4px; background: var(--muted); border-radius: 0 1px 1px 0; }
+  .battery-fill { background: var(--accent2); height: 100%; width: 75%; border-radius: 1px; }
+
+  /* HEADER */
+  .app-header {
+    background: linear-gradient(135deg, #0f1117 0%, #1a1d27 100%);
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .logo-mark { display: flex; align-items: center; gap: 8px; }
+  .logo-box { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-box svg { width: 18px; height: 18px; fill: white; }
+  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-text span { color: var(--accent); }
+  .badge-gps { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: var(--accent2); font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
+  .badge-gps::before { content: ''; width: 5px; height: 5px; background: var(--accent2); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .header-sub { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  /* CONTENT */
+  .app-content { padding: 0 16px 24px; }
+
+  /* PROGRESS */
+  .progress-bar-wrap { padding: 14px 0 10px; }
+  .progress-steps { display: flex; gap: 4px; }
+  .step { flex: 1; height: 3px; background: var(--border); border-radius: 2px; transition: background 0.3s; }
+  .step.active { background: var(--accent); }
+  .step.done { background: var(--accent2); }
+  .progress-label { font-size: 10px; color: var(--muted); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+
+  /* SECTION */
+  .section { margin-bottom: 4px; }
+  .section-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 0 8px;
+  }
+  .section-icon { width: 26px; height: 26px; background: var(--surface2); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .section-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+  /* FIELDS */
+  .field { margin-bottom: 12px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 5px;
+    letter-spacing: 0.3px;
+  }
+  label .req { color: var(--accent); margin-left: 2px; }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding: 9px 11px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+  }
+  input::placeholder, textarea::placeholder { color: var(--label); }
+  select { cursor: pointer; }
+  select option { background: var(--surface2); }
+  textarea { resize: none; min-height: 72px; line-height: 1.5; }
+
+  /* UNIT INPUT */
+  .input-unit { position: relative; }
+  .input-unit input { padding-right: 36px; }
+  .unit-tag { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; pointer-events: none; }
+
+  /* ABERTURA CARD */
+  .abertura-list { display: flex; flex-direction: column; gap: 10px; }
+  .abertura-card {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 13px;
+    position: relative;
+  }
+  .abertura-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .abertura-num { font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); background: rgba(59,130,246,0.1); padding: 2px 7px; border-radius: 4px; }
+  .btn-remove { background: rgba(239,68,68,0.1); border: none; color: var(--danger); font-size: 16px; cursor: pointer; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+
+  /* PHOTO ZONE */
+  .photo-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    margin-top: 10px;
+  }
+  .photo-zone:hover { border-color: var(--accent); background: rgba(59,130,246,0.04); }
+  .photo-zone .icon { font-size: 24px; margin-bottom: 4px; }
+  .photo-zone p { font-size: 11px; color: var(--muted); }
+  .photo-zone strong { color: var(--accent); }
+
+  /* ADD BUTTON */
+  .btn-add {
+    width: 100%;
+    background: rgba(59,130,246,0.08);
+    border: 1.5px dashed rgba(59,130,246,0.4);
+    color: var(--accent);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 4px;
+  }
+  .btn-add:hover { background: rgba(59,130,246,0.15); }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 4px 0 16px; }
+
+  /* OBSERVACIONES */
+  .obs-tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .obs-tag {
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 20px; padding: 4px 10px; font-size: 11px; color: var(--muted);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .obs-tag.selected { background: rgba(59,130,246,0.15); border-color: var(--accent); color: var(--accent); }
+
+  /* FIRMA */
+  .firma-box {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--label);
+    font-size: 12px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .firma-box canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+  /* FOOTER BUTTONS */
+  .footer-btns { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; }
+
+  .btn-demo {
+    width: 100%;
+    background: rgba(245,158,11,0.1);
+    border: 1.5px solid rgba(245,158,11,0.4);
+    color: var(--warn);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 11px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-demo:hover { background: rgba(245,158,11,0.18); }
+
+  .btn-send {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%);
+    border: none;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 13px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-send:hover { opacity: 0.9; }
+  .btn-send:active { transform: scale(0.98); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1a2744;
+    border: 1px solid rgba(59,130,246,0.5);
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    z-index: 9999;
+    width: 90%;
+    max-width: 380px;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s;
+    opacity: 0;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast-icon { width: 36px; height: 36px; background: rgba(16,185,129,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .toast-body { flex: 1; }
+  .toast-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .toast-sub { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  /* HOME BAR */
+  .home-bar { padding: 10px; display: flex; justify-content: center; }
+  .home-bar span { width: 120px; height: 4px; background: var(--border); border-radius: 2px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 460px) {
+    body { padding: 0; }
+    .phone-shell { border-radius: 0; border: none; max-width: 100%; min-height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="status-icons">
+      <div class="signal">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <span style="font-size:10px;">4G</span>
+      <div class="battery"><div class="battery-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="app-header">
+    <div class="header-top">
+      <div class="logo-mark">
+        <div class="logo-box">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22" style="fill:none;stroke:white;stroke-width:1.5"/></svg>
+        </div>
+        <span class="logo-text">Alu<span>Tech</span></span>
+      </div>
+      <div class="badge-gps">GPS activo</div>
+    </div>
+    <div class="header-sub">Relevamiento técnico en obra · v2.4</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="app-content">
+
+    <!-- PROGRESS -->
+    <div class="progress-bar-wrap">
+      <div class="progress-steps">
+        <div class="step done"></div>
+        <div class="step active"></div>
+        <div class="step"></div>
+        <div class="step"></div>
+      </div>
+      <div class="progress-label">Paso 2 de 4 — Datos técnicos de obra</div>
+    </div>
+
+    <form id="relevForm" onsubmit="return false;">
+
+      <!-- SECCIÓN 1: DATOS DE OBRA -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">🏗️</div>
+          <div class="section-title">Identificación de obra</div>
+        </div>
+
+        <div class="field">
+          <label>Nro. de Obra <span class="req">*</span></label>
+          <input type="text" id="nroObra" placeholder="OBR-2025-0041" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Cliente <span class="req">*</span></label>
+            <input type="text" id="cliente" placeholder="Razón social" />
+          </div>
+          <div class="field">
+            <label>Arquitecto <span class="req">*</span></label>
+            <input type="text" id="arquitecto" placeholder="Nombre completo" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Dirección de obra <span class="req">*</span></label>
+          <input type="text" id="direccion" placeholder="Calle, número, localidad" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Localidad</label>
+            <select id="localidad">
+              <option value="">Seleccionar</option>
+              <option>Córdoba Capital</option>
+              <option>Alta Gracia</option>
+              <option>Villa Carlos Paz</option>
+              <option>Río Cuarto</option>
+              <option>Jesús María</option>
+              <option>Otra localidad</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fecha de relevamiento</label>
+            <input type="date" id="fecha" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Tipo de proyecto</label>
+          <select id="tipoProy">
+            <option value="">Seleccionar</option>
+            <option>Residencial privado</option>
+            <option>Edificio corporativo</option>
+            <option>Desarrollo inmobiliario</option>
+            <option>Comercio / Local</option>
+            <option>Industria</option>
+          </select>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- SECCIÓN 2: CONDICIONES DE OBRA -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">🔍</div>
+          <div class="section-title">Condiciones del sitio</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Estado de obra</label>
+            <select id="estadoObra">
+              <option value="">Estado</option>
+              <option>En excavación</option>
+              <option>En estructura</option>
+              <option>Mampostería</option>
+              <option>Terminaciones</option>
+              <option>Finalizada</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Pisos totales</label>
+            <input type="number" id="pisos" placeholder="Ej: 4" min="1" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Condición del muro en vanos</label>
+          <select id="muro">
+            <option value="">Seleccionar</option>
+            <option>Ladrillo visto sin revocar</option>
+            <option>Revocado sin pintar</option>
+            <option>Revocado y pintado</option>
+            <option>Hormigón a la vista</option>
+            <option>Steel frame / seco</option>
+          </select>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Acceso al lugar</label>
+            <select id="acceso">
+              <option value="">Acceso</option>
+              <option>Libre sin restricción</option>
+              <option>Con encargado presente</option>
+              <option>Solo con llave</option>
+              <option>Restringido - avisar</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Exposición climática</label>
+            <select id="clima">
+              <option value="">Exposición</option>
+              <option>Interior protegido</option>
+              <option>Fachada estándar</option>
+              <option>Alta exposición al viento</option>
+              <option>Frente marítimo / húmedo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- SECCIÓN 3: ABERTURAS -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">🪟</div>
+          <div class="section-title">Relevamiento de aberturas</div>
+        </div>
+
+        <div class="abertura-list" id="aberturaList"></div>
+
+        <button type="button" class="btn-add" onclick="addAbertura()">
+          + Agregar abertura
+        </button>
+      </div>
+
+      <hr class="divider">
+
+      <!-- SECCIÓN 4: OBSERVACIONES -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">📋</div>
+          <div class="section-title">Observaciones y condiciones especiales</div>
+        </div>
+
+        <div class="field">
+          <label>Problemas detectados en vanos</label>
+          <div class="obs-tag-row" id="tagRow">
+            <div class="obs-tag" onclick="toggleTag(this)">Vano fuera de escuadra</div>
+            <div class="obs-tag" onclick="toggleTag(this)">Humedad visible</div>
+            <div class="obs-tag" onclick="toggleTag(this)">Medidas irregulares</div>
+            <div class="obs-tag" onclick="toggleTag(this)">Refuerzo estructural</div>
+            <div class="obs-tag" onclick="toggleTag(this)">Desnivel de piso</div>
+            <div class="obs-tag" onclick="toggleTag(this)">Difícil acceso de instalación</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Notas libres del arquitecto</label>
+          <textarea id="notas" placeholder="Indicar cualquier condición especial, restricción de acceso, coordinación con otros oficios, etc."></textarea>
+        </div>
+
+        <div class="field">
+          <label>Plazo estimado para inicio de instalación</label>
+          <input type="date" id="plazoInst" />
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- SECCIÓN 5: FIRMA -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">✍️</div>
+          <div class="section-title">Firma del arquitecto</div>
+        </div>
+        <div class="firma-box" id="firmaBox" title="Tocar para firmar">
+          <span id="firmaLabel">Toque aquí para firmar digitalmente</span>
+          <canvas id="firmaCanvas"></canvas>
+        </div>
+        <p style="font-size:10px;color:var(--label);margin-top:5px;">Al enviar, confirmás que las medidas relevadas son correctas y definitivas.</p>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="footer-btns">
+        <button type="button" class="btn-demo" onclick="autoCompletar()">
+          <span>⚡</span> Autocompletar con datos de ejemplo
+        </button>
+        <button type="button" class="btn-send" onclick="enviarDatos()">
+          <span>📡</span> Enviar relevamiento a planta
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <div class="home-bar"><span></span></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon">✅</div>
+  <div class="toast-body">
+    <div class="toast-title">Relevamiento enviado con éxito</div>
+    <div class="toast-sub" id="toastSub">OBR-2025-0041 · Sincronizando con planta...</div>
+  </div>
+</div>
+
+<script>
+  // ─── ABERTURAS ───────────────────────────────────────────────
+  let aberturaCount = 0;
+
+  function addAbertura(data = null) {
+    aberturaCount++;
+    const n = aberturaCount;
+    const card = document.createElement('div');
+    card.className = 'abertura-card';
+    card.id = `abertura-${n}`;
+    card.innerHTML = `
+      <div class="abertura-card-header">
+        <span class="abertura-num">AB-${String(n).padStart(2,'0')}</span>
+        <button type="button" class="btn-remove" onclick="removeAbertura(${n})">×</button>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Tipo de abertura</label>
+          <select id="tipo${n}">
+            <option value="">Tipo</option>
+            <option ${data?.tipo==='Ventana corrediza'?'selected':''}>Ventana corrediza</option>
+            <option ${data?.tipo==='Ventana proyectante'?'selected':''}>Ventana proyectante</option>
+            <option ${data?.tipo==='Puerta balcón'?'selected':''}>Puerta balcón</option>
+            <option ${data?.tipo==='Puerta de entrada'?'selected':''}>Puerta de entrada</option>
+            <option ${data?.tipo==='Paño fijo'?'selected':''}>Paño fijo</option>
+            <option ${data?.tipo==='Celosía'?'selected':''}>Celosía</option>
+            <option ${data?.tipo==='Mampara'?'selected':''}>Mampara</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Cantidad</label>
+          <input type="number" id="cant${n}" value="${data?.cant||1}" min="1" max="50" placeholder="1" />
+        </div>
+      </div>
+      <div class="field-row-3">
+        <div class="field">
+          <label>Ancho (mm)</label>
+          <div class="input-unit">
+            <input type="number" id="ancho${n}" value="${data?.ancho||''}" placeholder="1200" />
+            <span class="unit-tag">mm</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Alto (mm)</label>
+          <div class="input-unit">
+            <input type="number" id="alto${n}" value="${data?.alto||''}" placeholder="1500" />
+            <span class="unit-tag">mm</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Profundidad</label>
+          <div class="input-unit">
+            <input type="number" id="prof${n}" value="${data?.prof||''}" placeholder="100" />
+            <span class="unit-tag">mm</span>
+          </div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Material</label>
+          <select id="mat${n}">
+            <option ${data?.mat==='Aluminio natural'?'selected':''}>Aluminio natural</option>
+            <option ${data?.mat==='Aluminio lacado blanco'?'selected':''}>Aluminio lacado blanco</option>
+            <option ${data?.mat==='Aluminio lacado negro'?'selected':''}>Aluminio lacado negro</option>
+            <option ${data?.mat==='PVC blanco'?'selected':''}>PVC blanco</option>
+            <option ${data?.mat==='Aluminio madera'?'selected':''}>Aluminio madera</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tipo de vidrio</label>
+          <select id="vid${n}">
+            <option ${data?.vid==='DVH 6+6+4'?'selected':''}>DVH 6+6+4</option>
+            <option ${data?.vid==='DVH 4+12+4'?'selected':''}>DVH 4+12+4</option>
+            <option ${data?.vid==='Monolítico 4mm'?'selected':''}>Monolítico 4mm</option>
+            <option ${data?.vid==='Laminado 3+3'?'selected':''}>Laminado 3+3</option>
+            <option ${data?.vid==='Templado 8mm'?'selected':''}>Templado 8mm</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Ubicación en obra (piso / sector)</label>
+        <input type="text" id="ubic${n}" value="${data?.ubic||''}" placeholder="Ej: PB · Frente norte" />
+      </div>
+      <div class="photo-zone" onclick="alert('Cámara habilitada (simulado)')">
+        <div class="icon">📷</div>
+        <p><strong>Adjuntar foto del vano</strong> · Tocar para abrir cámara</p>
+      </div>
+    `;
+    document.getElementById('aberturaList').appendChild(card);
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function removeAbertura(n) {
+    const el = document.getElementById(`abertura-${n}`);
+    if (el) el.remove();
+  }
+
+  // ─── TAGS ────────────────────────────────────────────────────
+  function toggleTag(el) {
+    el.classList.toggle('selected');
+  }
+
+  // ─── AUTOCOMPLETE ────────────────────────────────────────────
+  function autoCompletar() {
+    document.getElementById('nroObra').value = 'OBR-2025-0041';
+    document.getElementById('cliente').value = 'Desarrollos Norte S.R.L.';
+    document.getElementById('arquitecto').value = 'Arq. Martín Ferreyra';
+    document.getElementById('direccion').value = 'Av. Colón 3450, Piso 2, Torre B';
+    document.getElementById('localidad').value = 'Córdoba Capital';
+    document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('tipoProy').value = 'Edificio corporativo';
+    document.getElementById('estadoObra').value = 'Terminaciones';
+    document.getElementById('pisos').value = '8';
+    document.getElementById('muro').value = 'Revocado sin pintar';
+    document.getElementById('acceso').value = 'Con encargado presente';
+    document.getElementById('clima').value = 'Fachada estándar';
+    document.getElementById('notas').value = 'Vano norte tiene desnivel de 8mm. Coordinar acceso con Sr. González (cel: 351-XXXXXXX). Inicio de obra eléctrica previsto para la misma semana, priorizar planta baja.';
+    document.getElementById('plazoInst').value = (() => {
+      const d = new Date(); d.setDate(d.getDate() + 21);
+      return d.toISOString().split('T')[0];
+    })();
+
+    // Limpiar y agregar aberturas de ejemplo
+    document.getElementById('aberturaList').innerHTML = '';
+    aberturaCount = 0;
+    const ejemplos = [
+      { tipo:'Ventana corrediza', cant:6, ancho:1200, alto:1100, prof:100, mat:'Aluminio lacado blanco', vid:'DVH 6+6+4', ubic:'Piso 1 al 6 · Fachada norte' },
+      { tipo:'Puerta balcón', cant:2, ancho:800, alto:2100, prof:100, mat:'Aluminio lacado blanco', vid:'DVH 4+12+4', ubic:'PB · Frente principal' },
+      { tipo:'Paño fijo', cant:4, ancho:600, alto:1500, prof:100, mat:'Aluminio natural', vid:'Templado 8mm', ubic:'Escalera · Lateral este' },
+    ];
+    ejemplos.forEach(e => addAbertura(e));
+
+    // Tags
+    document.querySelectorAll('.obs-tag').forEach(t => {
+      if (t.textContent === 'Desnivel de piso' || t.textContent === 'Difícil acceso de instalación') t.classList.add('selected');
+      else t.classList.remove('selected');
+    });
+
+    // Firma simulada
+    simularFirma();
+  }
+
+  function simularFirma() {
+    const canvas = document.getElementById('firmaCanvas');
+    const box = document.getElementById('firmaBox');
+    canvas.width = box.offsetWidth;
+    canvas.height = box.offsetHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(30, 45); ctx.bezierCurveTo(60,20,90,60,120,40);
+    ctx.bezierCurveTo(150,20,170,55,200,45);
+    ctx.stroke();
+    document.getElementById('firmaLabel').style.display = 'none';
+  }
+
+  // ─── FIRMA CANVAS ────────────────────────────────────────────
+  const firmaBox = document.getElementById('firmaBox');
+  const firmaCanvas = document.getElementById('firmaCanvas');
+  let isDrawing = false;
+
+  firmaBox.addEventListener('mousedown', startFirma);
+  firmaBox.addEventListener('touchstart', startFirma, { passive: true });
+  firmaBox.addEventListener('mousemove', drawFirma);
+  firmaBox.addEventListener('touchmove', drawFirma, { passive: true });
+  firmaBox.addEventListener('mouseup', () => isDrawing = false);
+  firmaBox.addEventListener('touchend', () => isDrawing = false);
+
+  function startFirma(e) {
+    isDrawing = true;
+    firmaCanvas.width = firmaBox.offsetWidth;
+    firmaCanvas.height = firmaBox.offsetHeight;
+    document.getElementById('firmaLabel').style.display = 'none';
+    const ctx = firmaCanvas.getContext('2d');
+    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    const pos = getPos(e);
+    ctx.moveTo(pos.x, pos.y);
+  }
+
+  function drawFirma(e) {
+    if (!isDrawing) return;
+    const ctx = firmaCanvas.getContext('2d');
+    const pos = getPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }
+
+  function getPos(e) {
+    const rect = firmaCanvas.getBoundingClientRect();
+    if (e.touches) return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  // ─── ENVÍO ───────────────────────────────────────────────────
+  function enviarDatos() {
+    const nro = document.getElementById('nroObra').value || 'SIN-NRO';
+    const cliente = document.getElementById('cliente').value;
+    if (!nro || !cliente) {
+      alert('Completá al menos el Nro. de Obra y el Cliente antes de enviar.');
+      return;
+    }
+    if (aberturaCount === 0) {
+      alert('Agregá al menos una abertura al relevamiento.');
+      return;
+    }
+
+    const btn = document.querySelector('.btn-send');
+    btn.textContent = '⏳ Enviando...';
+    btn.disabled = true;
+
+    setTimeout(() => {
+      btn.textContent = '✅ Enviado';
+      document.getElementById('toastSub').textContent = `${nro} · Planta recibió ${aberturaCount} abertura(s) — ${new Date().toLocaleTimeString('es-AR')}`;
+      showToast();
+      setTimeout(() => {
+        btn.textContent = '📡 Enviar relevamiento a planta';
+        btn.disabled = false;
+      }, 4000);
+    }, 1800);
+  }
+
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 5000);
+  }
+
+  // Init: una abertura vacía
+  addAbertura();
+</script>
+</body>
+</html>
